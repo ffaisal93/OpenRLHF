@@ -7,7 +7,7 @@ from openrlhf.utils.utils import zero_pad_sequences
 
 
 def preprocess_data(
-    data, input_template=None, input_key="input", output_key=None, apply_chat_template=None, multiturn=False
+    data, input_template=None, input_key="input", output_key=None, apply_chat_template=None, multiturn=False, system=None
 ):
     if apply_chat_template:
         if output_key:
@@ -15,11 +15,27 @@ def preprocess_data(
             response_message = data[output_key]
 
             if isinstance(prompt_message, str) and isinstance(response_message, str):
-                prompt_message = [{"role": "user", "content": prompt_message}]
+                # Add system message if provided
+                if system:
+                    prompt_message = [{"role": "system", "content": system}, {"role": "user", "content": prompt_message}]
+                else:
+                    prompt_message = [{"role": "user", "content": prompt_message}]
                 response_message = [{"role": "assistant", "content": response_message}]
 
             prompt = apply_chat_template(prompt_message, tokenize=False, add_generation_prompt=True)
             response = apply_chat_template(prompt_message + response_message, tokenize=False)[len(prompt) :]
+            
+            # Print one example after applying chat template
+            if hasattr(preprocess_data, '_printed_example'):
+                pass
+            else:
+                # print("\n=== Example after applying chat template ===")
+                # print("Prompt:")
+                # print(prompt)
+                # print("\nResponse:")
+                # print(response)
+                # print("=" * 50)
+                preprocess_data._printed_example = True
         else:
             prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)
             response = apply_chat_template(data[input_key], tokenize=False)[len(prompt) :]
@@ -64,6 +80,7 @@ class SFTDataset(Dataset):
         self.input_template = input_template
         self.input_key = getattr(self.strategy.args, "input_key", None)
         self.output_key = getattr(self.strategy.args, "output_key", None)
+        self.system = getattr(self.strategy.args, "system", None)
         self.apply_chat_template = getattr(self.strategy.args, "apply_chat_template", False)
 
         if self.apply_chat_template:
@@ -141,6 +158,7 @@ class SFTDataset(Dataset):
             self.output_key,
             apply_chat_template=None if self.pretrain_mode else self.apply_chat_template,
             multiturn=self.multiturn,
+            system=self.system,
         )
 
         if not self.pretrain_mode:

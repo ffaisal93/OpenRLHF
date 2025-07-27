@@ -217,6 +217,9 @@ if __name__ == "__main__":
 
     # packing SFT samples without CrossAttention
     parser.add_argument("--packing_samples", action="store_true", default=False)
+    
+    # dynamic batch
+    parser.add_argument("--use_dynamic_batch", action="store_true", default=False, help="Use dynamic batch size")
 
     # custom dataset
     parser.add_argument("--dataset", type=str, default=None, help="Path to the training dataset")
@@ -230,6 +233,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--input_key", type=str, default="input", help="JSON dataset key")
     parser.add_argument("--output_key", type=str, default=None, help="JSON dataset key")
+    parser.add_argument("--system", type=str, default=None, help="System message for chat template")
     parser.add_argument("--input_template", type=str, default="User: {}\nAssistant: ")
     parser.add_argument(
         "--apply_chat_template", action="store_true", default=False, help="Use HF tokenizer chat template"
